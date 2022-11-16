@@ -3,7 +3,6 @@
        
     ],  
     "invoices":{
-        "invoiceNumber":"invoice_number",
         "id":"invoice_id",
         "customerName":"customer_name",
         "customerId":"customer_id",
