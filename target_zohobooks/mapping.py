@@ -1,6 +1,8 @@
 import json
 import os
 from cgitb import lookup
+from datetime import datetime
+import ast
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
@@ -25,11 +27,19 @@ class UnifiedMapping:
             address[address_mapping[key]] = addresses[key]
         payload[type] = address
         return payload
+    
+    def parse_objs(self, lineitems):
+        try:
+            return ast.literal_eval(lineitems)
+        except:
+            return json.loads(lineitems)
 
     def map_lineitems(self, lineitems, lineitems_mapping, payload):
         payload["line_items"] = []
+        if isinstance(lineitems, str):
+            lineitems = self.parse_objs(lineitems)
+            
         if isinstance(lineitems, list):
-
             if len(lineitems) > 0:
                 for line in lineitems:
                     line_item = {}
@@ -63,7 +73,7 @@ class UnifiedMapping:
                     payload,
                     "shipping_address",
                 )
-            elif lookup_key == "lineItems":
+            elif lookup_key in ["lineItems", "line_items"]:
                 line_items = record.get(lookup_key, [])
                 payload = self.map_lineitems(
                     line_items,
@@ -73,6 +83,8 @@ class UnifiedMapping:
             else:
                 val = record.get(lookup_key, "")
                 if val:
+                    if isinstance(val, datetime):
+                        val = val.strftime("%Y-%m-%d")
                     payload[mapping[lookup_key]] = val
 
         # filter ignored keys

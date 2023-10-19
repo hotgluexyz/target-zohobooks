@@ -1,36 +1,38 @@
 {
-    "ignore":[
-       
-    ],  
-    "invoices":{
-        "id":"invoice_id",
-        "customerName":"customer_name",
-        "customerId":"customer_id",
-        "currency":"currency_code",
-        "issueDate":"date",
-        "dueDate":"due_date",
-        "paidDate":"payment_expected_date",
-        "subTotal":"sub_total",
-        "totalAmount":"total",
-        "totalDiscount":"discount_total",
-        "amountDue":"balance",
-        "status":"current_sub_status",
-        "createdAt":"date",
-        "updatedAt":"last_modified_time",
-        
-        "lineItems":{
-          "id": "line_item_id",
-          "productId": "item_id",
-          "productName": "name",
-          "description": "description",
-          "quantity": "quantity",
-          "unitPrice": "rate",
-          "totalPrice": "item_total",
-          "discountAmount": "discount",
-          "accountName": "account_name",
-          "taxCode": "tax_name"
-          
-        }
+  "ignore": [],
+  "invoices": {
+    "id": "invoice_id",
+    "customerName": "customer_name",
+    "customerId": "customer_id",
+    "currency": "currency_code",
+    "issueDate": "date",
+    "dueDate": "due_date",
+    "paidDate": "payment_expected_date",
+    "subTotal": "sub_total",
+    "totalAmount": "total",
+    "totalDiscount": "discount_total",
+    "amountDue": "balance",
+    "status": "current_sub_status",
+    "createdAt": "date",
+    "updatedAt": "last_modified_time",
+    "lineItems": {
+      "id": "line_item_id",
+      "productId": "item_id",
+      "productName": "name",
+      "description": "description",
+      "quantity": "quantity",
+      "unitPrice": "rate",
+      "totalPrice": "item_total",
+      "discountAmount": "discount",
+      "accountName": "account_name",
+      "taxCode": "tax_name"
     }
-    
+  },
+  "buy_orders": {
+    "transaction_date": "date",
+    "line_items": {
+      "quantity": "quantity",
+      "product_remoteId": "item_id"
+    }
+  }
 }
