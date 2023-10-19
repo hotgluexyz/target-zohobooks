@@ -117,11 +117,39 @@ class ZohobooksSink(RecordSink):
         payload = self.invoice_lookup(payload)
         res = self.entity_post("invoices", payload)
         self.post_message(res)
+    
+    def process_buyorder(self, record):
+        mapping = UnifiedMapping()
+        #get product ids for lines
+
+        payload = mapping.prepare_payload(record, "buy_orders")
+        line_items = [item for item in payload.get("line_items") if item.get("item_id")]
+        if not line_items:
+            self.logger.info(f"skipping buyorder {vendor_name} with no")
+            return
+        else:
+            payload["line_items"] = line_items
+
+        #get vendor id
+        vendor_name = record.get("supplier_name")
+        if vendor_name:
+            vendors = self.entity_search("contacts", {"contact_name": record.get("supplier_name")})
+        if vendors:
+            vendor_id = vendors[0]["contact_id"]
+            payload["vendor_id"] = vendor_id
+        else:
+            self.logger.info(f"supplier {vendor_name} does not exist in zohobooks")
+            return
+        
+        res = self.entity_post("purchaseorders", payload)
+        self.post_message(res)
 
     def process_record(self, record: dict, context: dict) -> None:
         """Process the record."""
         if self.stream_name == "Invoices":
             self.process_invoice(record)
+        if self.stream_name == "BuyOrders":
+            self.process_buyorder(record)
 
     def post_message(self, res):
         res.raise_for_status()
