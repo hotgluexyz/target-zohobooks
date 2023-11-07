@@ -18,10 +18,10 @@ class ZohobooksSink(RecordSink):
     total = 0
 
     def get_auth(self):
-
+        url = self.config.get("accounts-server", "https://accounts.zoho.com")
         if self.access_token is None or self.expires_at <= datetime.utcnow():
             response = requests.post(
-                "https://accounts.zoho.com/oauth/v2/token",
+                f"{url}/oauth/v2/token",
                 data={
                     "client_id": self.config.get("client_id"),
                     "client_secret": self.config.get("client_secret"),
@@ -30,10 +30,9 @@ class ZohobooksSink(RecordSink):
                 },
             )
 
-            if response.status_code != 200:
-                raise Exception(response.text)
-
             data = response.json()
+            if data.get("error"):
+                raise Exception(f"Auth request failed with response {response.text}")
 
             self.access_token = data["access_token"]
 
