@@ -30,6 +30,7 @@
   },
   "buy_orders": {
     "transaction_date": "date",
+    "id": "reference_number",
     "line_items": {
       "quantity": "quantity",
       "product_remoteId": "item_id"
