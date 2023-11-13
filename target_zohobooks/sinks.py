@@ -137,9 +137,8 @@ class ZohobooksSink(RecordSink):
             vendor_id = vendors[0]["contact_id"]
             payload["vendor_id"] = vendor_id
         else:
-            self.logger.info(f"supplier {vendor_name} does not exist in zohobooks")
-            return
-        
+            raise Exception(f"Supplier with name={vendor_name} does not exist in zohobooks")
+
         res = self.entity_post("purchaseorders", payload)
         self.post_message(res)
 
