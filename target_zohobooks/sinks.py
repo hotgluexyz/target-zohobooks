@@ -116,7 +116,7 @@ class ZohobooksSink(RecordSink):
         payload = self.invoice_lookup(payload)
         res = self.entity_post("invoices", payload)
         self.post_message(res)
-    
+
     def process_buyorder(self, record):
         mapping = UnifiedMapping()
         #get product ids for lines
@@ -144,12 +144,17 @@ class ZohobooksSink(RecordSink):
 
     def process_record(self, record: dict, context: dict) -> None:
         """Process the record."""
+        self.logger.info(f"Processing record for stream {self.stream_name}, record: {record}")
         if self.stream_name == "Invoices":
             self.process_invoice(record)
         if self.stream_name == "BuyOrders":
             self.process_buyorder(record)
 
     def post_message(self, res):
-        res.raise_for_status()
+        try:
+            res.raise_for_status()
+        except Exception as e:
+            raise Exception(f"Request failed with response {res.text}")
+
         self.total = self.total + 1
         print(f"Status: {res.status_code}, {self.total} records processed so far.")
