@@ -35,5 +35,18 @@
       "quantity": "quantity",
       "product_remoteId": "item_id"
     }
+  },
+  "bills": {
+    "number": "bill_number",
+    "dueDate": "due_date",
+    "vendorId": "vendor_id",
+    "vendorName": "vendor_name",
+    "createdAt": "date",
+    "lineItems": {
+      "productName": "name",
+      "productId": "item_id",
+      "quantity": "quantity",
+      "unitPrice": "rate"
+    }
   }
 }

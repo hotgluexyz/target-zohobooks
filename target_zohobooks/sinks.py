@@ -1,11 +1,12 @@
 """Zohobooks target sink class, which handles writing streams."""
 
 
-from datetime import datetime, timedelta
-
+import json
 import requests
-from singer_sdk.sinks import RecordSink
 
+from datetime import datetime, timedelta
+from singer_sdk.sinks import RecordSink
+from pendulum import parse
 from target_zohobooks.mapping import UnifiedMapping
 
 
@@ -113,8 +114,39 @@ class ZohobooksSink(RecordSink):
     def process_invoice(self, record):
         mapping = UnifiedMapping()
         payload = mapping.prepare_payload(record, "invoices")
+        if payload.get("payment_expected_date"):
+            payload["status"] = "paid"
+
         payload = self.invoice_lookup(payload)
         res = self.entity_post("invoices", payload)
+        self.post_message(res)
+
+    def process_bill(self, record):
+        mapping = UnifiedMapping()
+        payload = mapping.prepare_payload(record, "bills")
+
+        vendor_name = record.get("vendorName")
+        if vendor_name:
+            vendors = self.entity_search("contacts", {"contact_name": vendor_name})
+
+        if vendors:
+            vendor_id = vendors[0]["contact_id"]
+            payload["vendor_id"] = vendor_id
+
+        purchaseorder_ids = []
+        if record.get("lineItems"):
+            if isinstance(record.get("lineItems"), str):
+                line_items = json.dumps(record.get("lineItems"))
+            else:
+                line_items = record.get("lineItems")
+
+        purchaseorder_ids = [item["orderId"] for item in line_items]
+        payload["purchaseorder_ids"] = purchaseorder_ids
+        for date_obj in ["due_date", "date"]:
+            if payload.get(date_obj):
+                payload[date_obj] = parse(payload[date_obj]).strftime("%Y-%m-%d")
+
+        res = self.entity_post("bills", payload)
         self.post_message(res)
 
     def process_buyorder(self, record):
@@ -145,6 +177,8 @@ class ZohobooksSink(RecordSink):
     def process_record(self, record: dict, context: dict) -> None:
         """Process the record."""
         self.logger.info(f"Processing record for stream {self.stream_name}, record: {record}")
+        if self.stream_name == "Bills":
+            self.process_bill(record)
         if self.stream_name == "Invoices":
             self.process_invoice(record)
         if self.stream_name == "BuyOrders":
