@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from singer_sdk.sinks import RecordSink
 from pendulum import parse
 from target_zohobooks.mapping import UnifiedMapping
+from backports.cached_property import cached_property
 
 
 class ZohobooksSink(RecordSink):
@@ -15,8 +16,28 @@ class ZohobooksSink(RecordSink):
 
     access_token = None
     expires_at = None
-    base_url = "https://books.zoho.com/api/v3"
     total = 0
+    
+    @cached_property
+    def base_url(self) -> str:
+        url = self.config.get("accounts-server", "https://www.zohoapis.com")
+        api_url = "https://www.zohoapis.com/books/v3/"
+        # Mapping domain suffixes to their corresponding base API URIs
+        domain_mapping = {
+            '.com': 'https://www.zohoapis.com/books/',
+            '.eu': 'https://www.zohoapis.eu/books/',
+            '.in': 'https://www.zohoapis.in/books/',
+            '.com.au': 'https://www.zohoapis.com.au/books/',
+            '.jp': 'https://www.zohoapis.jp/books/'
+        }
+
+        # Check for domain presence and update api_url dynamically
+        for domain, base_api_url in domain_mapping.items():
+            if domain in url:
+                api_url = base_api_url + 'v3/'  # Append '/v3/' to the base URL
+                break  # Stop checking further domains if found
+
+        return api_url
 
     def get_auth(self):
         url = self.config.get("accounts-server", "https://accounts.zoho.com")
@@ -152,8 +173,10 @@ class ZohobooksSink(RecordSink):
     def process_buyorder(self, record):
         mapping = UnifiedMapping()
         #get product ids for lines
-
+        
         payload = mapping.prepare_payload(record, "buy_orders")
+        #get vendor id
+        vendor_name = record.get("supplier_name")
         line_items = [item for item in payload.get("line_items") if item.get("item_id")]
         if not line_items:
             self.logger.info(f"skipping buyorder {vendor_name} with no")
@@ -161,8 +184,7 @@ class ZohobooksSink(RecordSink):
         else:
             payload["line_items"] = line_items
 
-        #get vendor id
-        vendor_name = record.get("supplier_name")
+        
         if vendor_name:
             vendors = self.entity_search("contacts", {"contact_name": record.get("supplier_name")})
         if vendors:
